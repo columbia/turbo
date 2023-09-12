@@ -1,0 +1,76 @@
+{
+    "mock": false,
+    "exact_match_caching": true,
+    "puredp": true,
+    "global_seed": 64,
+    "alpha": 0.05,
+    "beta": 0.001,
+    "n_processes": 1,
+    "mechanism": {
+        "type": "Hybrid",
+        "probabilistic_cfg": {
+            "learning_rate": 4,
+            "heuristic": "bin_visits:5-1",
+            "bootstrapping": true,
+            "tau": 0.01,
+            "external_update_on_cached_results": false
+        }
+    },
+    "cache": {
+        "host": "localhost",
+        "port": 6379
+    },
+    "planner": {
+        "method": "MinCuts",
+        "monte_carlo": true,
+        "monte_carlo_N": 10000,
+        "monte_carlo_cache": true
+    },
+    "budget_accountant": {
+        "host": "localhost",
+        "port": 6378,
+        "epsilon": 10,
+        "delta": 1e-07
+    },
+    "postgres": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "citibike",
+        "username": "postgres",
+        "password": "postgres"
+    },
+    "blocks": {
+        "initial_num": 1,
+        "max_num": 50,
+        "arrival_interval": 1,
+        "block_data_path": "/home/kelly/turbo/data/citibike/citibike_data/blocks",
+        "block_metadata_path": "/home/kelly/turbo/data/citibike/citibike_data/blocks/metadata.json",
+        "block_requests_pattern": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
+    },
+    "tasks": {
+        "path": "/home/kelly/turbo/data/citibike/citibike_workload/2485queries.privacy_tasks.csv",
+        "block_selection_policy": "LatestBlocks",
+        "avg_num_tasks_per_block": 200,
+        "max_num": 10000,
+        "initial_num": 0,
+        "zipf_k": 0
+    },
+    "blocks_server": {
+        "host": "localhost",
+        "port": 1025
+    },
+    "tasks_server": {
+        "host": "localhost",
+        "port": 1024
+    },
+    "logs": {
+        "verbose": false,
+        "save": false,
+        "mlflow": false,
+        "mlflow_experiment_id": "",
+        "loguru_level": "INFO",
+        "log_every_n_tasks": 10000,
+        "print_pid": false,
+        "validation_interval": 0
+    }
+}

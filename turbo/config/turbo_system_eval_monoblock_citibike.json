@@ -1,0 +1,77 @@
+{
+    "mock": false,
+    "exact_match_caching": true,
+    "puredp": true,
+    "global_seed": 64,
+    "alpha": 0.05,
+    "beta": 0.001,
+    "n_processes": 1,
+    "mechanism": {
+        "type": "Hybrid",
+        "probabilistic_cfg": {
+            "learning_rate": 4,
+            "heuristic": "bin_visits:5-1",
+            "bootstrapping": false,
+            "tau": 0.01,
+            "external_update_on_cached_results": false
+        }
+    },
+    "cache": {
+        "host": "localhost",
+        "port": 6371
+    },
+    "planner": {
+        "method": "NoCuts",
+        "monte_carlo": true,
+        "monte_carlo_N": 10000,
+        "monte_carlo_cache": true
+    },
+    "budget_accountant": {
+        "host": "localhost",
+        "port": 6370,
+        "epsilon": 10,
+        "delta": 1e-07
+    },
+    "postgres": {
+        "host": "localhost",
+        "port": 5430,
+        "database": "citibike",
+        "username": "postgres",
+        "password": "postgres"
+    },
+    "blocks": {
+        "initial_num": 1,
+        "max_num": 1,
+        "arrival_interval": 1,
+        "block_data_path": "data/citibike/citibike_data/blocks",
+        "block_metadata_path": "data/citibike/citibike_data/blocks/metadata.json",
+        "block_requests_pattern": [1]
+    },
+    "tasks": {
+        "path": "data/citibike/citibike_workload/2485queries.privacy_tasks.csv",
+        "block_selection_policy": "RandomBlocks",
+        "avg_num_tasks_per_block": 2e3,
+        "max_num": 2e3,
+        "initial_num": 0,
+        "zipf_k": 0
+    },
+    "blocks_server": {
+        "host": "localhost",
+        "port": 1025
+    },
+    "tasks_server": {
+        "host": "localhost",
+        "port": 1024
+    },
+    "logs": {
+        "verbose": false,
+        "save": true,
+        "save_dir": "system_runtime_citibike",
+        "mlflow": false,
+        "mlflow_experiment_id": "",
+        "loguru_level": "INFO",
+        "log_every_n_tasks": 1,
+        "print_pid": false,
+        "validation_interval": 0
+    }
+}

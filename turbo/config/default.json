@@ -1,0 +1,114 @@
+{
+    "mock": true,
+    "enable_random_seed": false,
+    "exact_match_caching": true,
+    "puredp": true,
+    "global_seed": 64,
+    "variance_reduction": true,
+    "alpha": 0.05,
+    "beta": 0.001,
+    "n_processes": 1,
+    "mechanism": {
+        "type": "Hybrid",
+        "probabilistic_cfg": {
+            "learning_rate": 0.2,
+            "heuristic": "bin_visits:5-5",
+            "bootstrapping": false,
+            "tau": 0,
+            "external_update_on_cached_results": true
+        }
+    },
+    "cache": {
+        "host": "localhost",
+        "port": 6379
+    },
+    "planner": {
+        "method": "MinCuts",
+        "monte_carlo": true,
+        "monte_carlo_N": 10000,
+        "monte_carlo_cache": true
+    },
+    "budget_accountant": {
+        "host": "localhost",
+        "port": 6378,
+        "epsilon": 10,
+        "delta": 1e-07,
+        "alphas": [
+            1.5,
+            1.75,
+            2,
+            2.25,
+            2.5,
+            2.75,
+            3,
+            3.25,
+            3.5,
+            3.75,
+            4,
+            4.5,
+            5,
+            6,
+            8,
+            16,
+            32,
+            64,
+            256,
+            1000,
+            10000
+        ]
+    },
+    "postgres": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "covid",
+        "username": "postgres",
+        "password": "postgres"
+    },
+    "blocks": {
+        "initial_num": 10,
+        "max_num": 10,
+        "arrival_interval": 1,
+        "block_data_path": "data/covid19/covid19_data/blocks",
+        "block_metadata_path": "data/covid19/covid19_data/blocks/metadata.json",
+        "block_requests_pattern": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+        ]
+    },
+    "tasks": {
+        "path": "data/covid19/covid19_workload/34425queries.privacy_tasks.csv",
+        "block_selection_policy": "RandomBlocks",
+        "avg_num_tasks_per_block": 1e3,
+        "max_num": 20e3,
+        "initial_num": 0,
+        "zipf_k": 1.5
+    },
+    "blocks_server": {
+        "host": "localhost",
+        "port": 1025
+    },
+    "tasks_server": {
+        "host": "localhost",
+        "port": 1024
+    },
+    "logs": {
+        "verbose": false,
+        "save": true,
+        "save_dir": "",
+        "mlflow": false,
+        "mlflow_experiment_id": "turbo",
+        "loguru_level": "INFO",
+        "log_every_n_tasks": 500,
+        "print_pid": true,
+        "mlflow_random_prefix": true,
+        "validation_interval": 0
+    }
+}

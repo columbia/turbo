@@ -1,0 +1,52 @@
+{
+    "mock": false,
+    "exact_match_caching": true,
+    "puredp": true,
+    "global_seed": 64,
+    "alpha": 0.05,
+    "beta": 0.001,
+    "n_processes": 1,
+    "mechanism": {
+        "type": "Hybrid",
+        "probabilistic_cfg": {
+            "learning_rate": "0:2_50:0.5_100:0.2",
+            "heuristic": "bin_visits:100-5",
+            "bootstrapping": true
+        }
+    },
+    "cache": {
+        "host": "localhost",
+        "port": 6371
+    },
+    "planner": {
+        "method": "NoCuts",
+        "monte_carlo": true,
+        "monte_carlo_N": 10000,
+        "monte_carlo_cache": true
+    },
+    "budget_accountant": {
+        "host": "localhost",
+        "port": 6370,
+        "epsilon": 10,
+        "delta": 1e-07
+    },
+    "postgres": {
+        "host": "localhost",
+        "port": 5430,
+        "database": "covid",
+        "username": "postgres",
+        "password": "postgres"
+    },
+    "blocks": {
+        "block_data_path": "data/covid19/covid19_data/blocks",
+        "block_metadata_path": "data/covid19/covid19_data/blocks/metadata.json"
+    },
+    "blocks_server": {
+        "host": "localhost",
+        "port": 1025
+    },
+    "tasks_server": {
+        "host": "localhost",
+        "port": 1024
+    }
+}
