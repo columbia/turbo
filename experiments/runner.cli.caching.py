@@ -6,7 +6,13 @@ from copy import deepcopy
 
 import numpy as np
 import typer
-from utils import analyze_convergence, analyze_monoblock, analyze_multiblock, get_paths
+from utils import (
+    analyze_convergence,
+    analyze_monoblock,
+    analyze_multiblock,
+    analyze_heuristics_2,
+    get_paths,
+)
 
 from experiments.ray_runner import grid_online
 
@@ -131,6 +137,65 @@ def caching_monoblock_heuristics_covid19(dataset):
     )
     experiments_start_and_join(experiments)
     analyze_monoblock(f"ray/{logs_dir}")
+
+
+def caching_monoblock_heuristics_2_covid19(dataset):
+    blocks_path, blocks_metadata, tasks_path_prefix = get_paths(dataset)
+    task_paths = ["34425queries.privacy_tasks.csv"]
+    task_paths = [
+        str(tasks_path_prefix.joinpath(task_path)) for task_path in task_paths
+    ]
+    block_requests_pattern = [1]
+
+    logs_dir = f"{dataset}/monoblock/heuristics2"
+    experiments = []
+    cl1 = [int(lr) for lr in np.linspace(0, 600, num=61)]
+    cl = [int(lr) for lr in np.linspace(0, 3000, num=301)]
+    bin_visits = [f"bin_visits:{c}-0" for c in cl1]
+    bin_visits_adaptive = [f"bin_visits:{c}-1" for c in cl1]
+    bin_visits_adaptive5 = [f"bin_visits:{c}-5" for c in cl1]
+    global_visits = [f"global_visits:{c}-0" for c in cl]
+    global_visits_adaptive = [f"global_visits:{c}-1" for c in cl]
+    global_visits_adaptive5 = [f"global_visits:{c}-5" for c in cl]
+
+    config = {
+        "global_seed": 64,
+        "logs_dir": logs_dir,
+        "tasks_path": task_paths,
+        "blocks_path": blocks_path,
+        "blocks_metadata": blocks_metadata,
+        "block_requests_pattern": block_requests_pattern,
+        "planner": ["NoCuts"],
+        "mechanism": ["Hybrid"],
+        "initial_blocks": [1],
+        "max_blocks": [1],
+        "avg_num_tasks_per_block": [7e4],
+        "max_tasks": [7e4],
+        "initial_tasks": [0],
+        "alpha": [0.05],
+        "beta": [0.001],
+        "zipf_k": [1, 1.5],
+        "heuristic": bin_visits
+        + bin_visits_adaptive
+        + global_visits
+        + global_visits_adaptive
+        + bin_visits_adaptive5
+        + global_visits_adaptive5,
+        "log_every_n_tasks": 100,
+        "learning_rate": [0.2],
+        "bootstrapping": [False],
+        "exact_match_caching": [False],
+        "tau": [0.05],
+        "mlflow_experiment_id": "monoblock_covid_heuristics2",
+        "external_update_on_cached_results": [False],
+    }
+    experiments.append(
+        multiprocessing.Process(
+            target=lambda config: grid_online(**config), args=(deepcopy(config),)
+        )
+    )
+    experiments_start_and_join(experiments)
+    analyze_heuristics_2(f"ray/{logs_dir}")
 
 
 def caching_monoblock_learning_rates_covid19(dataset):

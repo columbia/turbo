@@ -11,6 +11,7 @@ from loguru import logger
 
 path = "data/covid19/covid19_data/"
 
+
 def load_and_preprocess_datasets(metadata):
 
     # --- Covid dataset --- #

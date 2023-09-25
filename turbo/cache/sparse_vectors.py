@@ -111,9 +111,7 @@ class SparseVectors:
             sv_state["b"] = float(sv_info[b"b"])
             sv_state["alpha"] = float(sv_info[b"alpha"])
             sv_state["noisy_threshold"] = float(sv_info[b"noisy_threshold"])
-            sv_state["initialized"] = (
-                True if str(sv_info[b"initialized"]) == "1" else False
-            )
+            sv_state["initialized"] = sv_info[b"initialized"].decode() == "1"
         # print("sv state", sv_state)
         if sv_state:
             return SparseVector(id=node_id, sv_state=sv_state)

@@ -33,7 +33,7 @@ def turbo(omegaconf):
     default_config = OmegaConf.load(DEFAULT_CONFIG_FILE)
     omegaconf = OmegaConf.create(omegaconf)
     config = OmegaConf.merge(default_config, omegaconf)
-  
+
     for a, b in [
         ("blocks", "block_data_path"),
         ("blocks", "block_metadata_path"),
@@ -53,9 +53,7 @@ def turbo(omegaconf):
     config.update({"blocks_metadata": blocks_metadata})
 
     pmw_attribute_names = config.blocks_metadata.attribute_names
-    pmw_attributes_domain_sizes = (
-        config.blocks_metadata.attributes_domain_sizes
-    )
+    pmw_attributes_domain_sizes = config.blocks_metadata.attributes_domain_sizes
     pmw_domain_size = config.blocks_metadata.domain_size
 
     config.blocks_metadata.update(
@@ -89,12 +87,14 @@ def turbo(omegaconf):
     elif config.planner.method == "MaxCuts":
         planner = MaxCuts(cache, budget_accountant, config)
 
-    query_processor = QueryProcessor(
-        db, cache, planner, budget_accountant, config
-    )
+    query_processor = QueryProcessor(db, cache, planner, budget_accountant, config)
 
-    blocks_server = multiprocessing.Process(target=BlocksServer(db, budget_accountant, config).run())
-    tasks_server = multiprocessing.Process(target=TasksServer(query_processor, budget_accountant, config).run())
+    blocks_server = multiprocessing.Process(
+        target=BlocksServer(db, budget_accountant, config).run()
+    )
+    tasks_server = multiprocessing.Process(
+        target=TasksServer(query_processor, budget_accountant, config).run()
+    )
 
     # Start the processes
     blocks_server.start()

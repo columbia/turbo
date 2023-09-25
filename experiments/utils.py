@@ -601,6 +601,46 @@ def analyze_multiblock(experiment_path):
     iplot(plot_global_budget_utilization_time(global_time_budgets, total_tasks))
 
 
+def analyze_heuristics_2(experiment_path):
+    def plot_budget_utilization_c0(df, total_tasks):
+        df["budget"] = df["initial_budget"] - df["budget"]
+
+        df.to_csv(
+            LOGS_PATH.joinpath(f"{experiment_path}/budget_utilization_c0.csv"),
+            index=False,
+        )
+        fig = px.line(
+            df,
+            x="c0",
+            y="budget",
+            color="key",
+            title=f"Budget Consumption - total tasks-{total_tasks}",
+            # category_orders=category_orders,
+            width=1000,
+            height=600,
+            facet_row="zipf_k",
+        )
+        fig.write_image(
+            LOGS_PATH.joinpath(f"{experiment_path}/budget_utilization_c0.png")
+        )
+        return fig
+
+    df = get_df(experiment_path)
+    df["zipf_k"] = df["zipf_k"].astype(float)
+
+    df.sort_values(["key", "zipf_k"], ascending=[True, True], inplace=True)
+    total_tasks = df["total_tasks"].max()
+    blocks = get_blocks_information(df)
+
+    def f(x):
+        heuristic_name, params = x.split(":")
+        c0, s0 = params.split("-")
+        return f"{heuristic_name}-S0={s0}", c0
+
+    blocks["key"], blocks["c0"] = zip(*blocks["heuristic"].apply(f))
+    iplot(plot_budget_utilization_c0(blocks, total_tasks))
+
+
 def analyze_sv_misses(experiment_path):
     def plot_sv_misses_per_node(df, total_tasks):
         df["sparse_vector_node"] = df["sv_node_id"]
