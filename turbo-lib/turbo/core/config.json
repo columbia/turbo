@@ -1,0 +1,17 @@
+{
+    "mock": true,
+    "puredp": true,
+    "alpha": 0.05,
+    "beta": 0.001,
+ 
+    "histogram_cfg": {
+        "learning_rate": 4,
+        "heuristic": "bin_visits:5-1",
+        "tau": 0.01
+    },
+    
+    "cache": {
+        "host": "localhost",
+        "port": 6379
+    }
+}

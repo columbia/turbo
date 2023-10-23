@@ -1,0 +1,161 @@
+from copy import deepcopy
+from pyspark.sql import SparkSession
+from pyspark.sql.types import IntegerType, StructField, StructType
+from tmlt.analytics.query_expr import QueryExpr
+from tmlt.analytics.privacy_budget import PrivacyBudget
+from tmlt.core.measurements.base import Measurement
+from tmlt.core.measurements.interactive_measurements import (
+    InsufficientBudgetError,
+)
+from tmlt.core.transformations.base import Transformation
+from tmlt.core.transformations.chaining import ChainTT
+from tmlt.core.transformations.dictionary import AugmentDictTransformation
+from tmlt.core.transformations.identity import Identity
+from tmlt.core.transformations.spark_transformations.filter import Filter
+from tmlt.core.utils.exact_number import ExactNumber
+from tmlt.turbo import (
+    AggregationTypeVisitor,
+    DataViewIdVisitor,
+    FilterClausesVisitor,
+    IdentityMeasurement,
+    QueryVisitor,
+    WrapperMeasurement,
+    BudgetConsumptionMeasurement,
+)
+from turbo.api import DPEngineHook, TurboQuery
+from typing import Optional, Tuple, Union
+
+
+def _format_insufficient_budget_msg(
+    requested_budget: Union[ExactNumber, Tuple[ExactNumber, ExactNumber]],
+    remaining_budget: Union[ExactNumber, Tuple[ExactNumber, ExactNumber]],
+    privacy_budget: PrivacyBudget,
+) -> str:
+    """Format message for InsufficientBudgetError."""
+    output = ""
+
+
+class TumultTurboQuery(TurboQuery):
+    def __init__(
+        self,
+        query_expr: QueryExpr,
+        transformation: Transformation,
+        measurement: Measurement,
+        privacy_budget: float,
+    ):
+        self.query_expr = query_expr
+        self.transformation = transformation
+        self.measurement = measurement
+        self.privacy_budget = privacy_budget
+
+    def get_filter_clause(self):
+        # Apply a generic visitor to validate that query is supported by Turbo
+        self.query_expr.accept(QueryVisitor())
+        return self.query_expr.accept(FilterClausesVisitor())
+
+    def get_aggregation_type(self):
+        # Apply a generic visitor to validate that query is supported by Turbo
+        self.query_expr.accept(QueryVisitor())
+        return self.query_expr.accept(AggregationTypeVisitor())
+
+    def get_data_view_id(self):
+        # Apply a generic visitor to validate that query is supported by Turbo
+        self.query_expr.accept(QueryVisitor())
+        return self.query_expr.accept(DataViewIdVisitor())
+
+
+class TumultDPEngineHook(DPEngineHook):
+    def __init__(self, privacy_accountant):
+        super().__init__()
+        self.privacy_accountant = privacy_accountant
+
+    def executeNPQuery(self, query: TurboQuery):
+        transformation = query.transformation
+        aggregation = query.measurement.transformation
+        noise_addition = query.measurement.measurement
+
+        # Create an `IdentityMeasurement` to obtain true output
+        just_aggregation = (
+            transformation
+            | aggregation
+            | IdentityMeasurement(
+                noise_addition.input_domain, noise_addition.input_metric
+            )
+        )
+        true_answer = self.privacy_accountant.measure(just_aggregation)
+        return true_answer.collect()[0][0]
+
+    def executeDPQuery(
+        self, query: TurboQuery, budget: float, true_answer: Optional[float] = None
+    ):
+        # Ignores `budget` argument
+        if true_answer is None:
+            true_answer = self.executeNPQuery(query)
+
+        # Convert the `true-result` to a Dataframe
+        spark_schema = StructType([StructField("count", IntegerType())])
+        true_answer = SparkSession.builder.getOrCreate().createDataFrame(
+            [[true_answer]], schema=spark_schema
+        )
+
+        chain_tm = query.transformation | query.measurement
+        measurement = WrapperMeasurement(chain_tm, true_answer)
+        dp_answer = self.privacy_accountant.measure(measurement)
+        return dp_answer.collect()[0][0]
+
+    def consume_budget(self, budget: float):
+        try:
+            budget_consume = ExactNumber.from_float(value=budget, round_up=True)
+
+            _ = self.privacy_accountant.measure(
+                BudgetConsumptionMeasurement(
+                    self.privacy_accountant._input_domain,
+                    self.privacy_accountant._input_metric,
+                    self.privacy_accountant._output_measure,
+                    budget_consume,
+                )
+            )
+        except InsufficientBudgetError as err:
+            msg = _format_insufficient_budget_msg(
+                err.requested_budget, err.remaining_budget, budget
+            )
+            raise RuntimeError(
+                "Cannot answer query without exceeding the Session privacy budget."
+                + msg
+            ) from err
+
+    def get_data_view_size(self, query: TurboQuery):
+        """
+        Recursively traverses the transformation, replaces any Filter transformations with Identity ones
+        (they don't count as view-changing transformations), computes the transformations and performs a count
+        on the output dataframe in order to find the data view size.
+        """
+
+        transformation = deepcopy(query.transformation)
+
+        def f(tr):
+            tr1 = tr.transformation1
+            tr2 = tr.transformation2
+
+            if isinstance(tr2, AugmentDictTransformation):
+                tmp = tr2._inner_transformation._transformation1
+                if isinstance(tmp._transformation2, Filter):
+                    tmp._transformation2 = Identity(
+                        metric=tmp._transformation2.input_metric,
+                        domain=tmp._transformation2.input_domain,
+                    )
+            if isinstance(tr1, ChainTT):
+                return f(tr1) | tr2
+            else:
+                return tr1 | tr2
+
+        transformation_no_filter = f(transformation)
+        just_transformation = transformation_no_filter | IdentityMeasurement(
+            transformation_no_filter.output_domain,
+            transformation_no_filter.output_metric,
+        )
+
+        df = self.privacy_accountant.measure(just_transformation)
+        # df.show()
+        data_view_size = df.count()
+        return data_view_size
