@@ -1,6 +1,6 @@
-# turbo-suite
+# Turbo
 
-A suite of tools that comprise the release of *Turbo*, an effective cache for linear query workloads over DP databases. Turbo builds upon private multiplicative weights (PMW), a DP mechanism that is powerful in theory but very ineffective in practice, and transforms it into a highly effective caching object, namely PMW-Bypass. A description of this project can be found on our paper, titled [Turbo: Effective caching in Differentially-Private Databases](https://arxiv.org/abs/2306.16163) and published as SOSP '23.
+*Turbo* is an effective cache for linear query workloads over DP databases. Turbo builds upon private multiplicative weights (PMW), a DP mechanism that is powerful in theory but very ineffective in practice, and transforms it into a highly effective caching object, namely PMW-Bypass. A description of this project can be found on our paper, titled [Turbo: Effective caching in Differentially-Private Databases](https://arxiv.org/abs/2306.16163) and published at SOSP '23.
 
 
 ## Repo Structure
